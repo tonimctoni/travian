@@ -1,1 +1,1 @@
-# travian
+# travian bot
