@@ -3,6 +3,7 @@ package main
 import "regexp"
 import "errors"
 import "strconv"
+import "bytes"
 
 type TravianData struct{
     capacity int64
@@ -11,6 +12,10 @@ type TravianData struct{
     iron int64
     korn_capacity int64
     korn int64
+    free_korn int64
+
+    is_logged_in bool
+    is_upgrading bool
 }
 
 var find_dorf1_capacity *regexp.Regexp
@@ -19,7 +24,14 @@ var find_dorf1_clay *regexp.Regexp
 var find_dorf1_iron *regexp.Regexp
 var find_dorf1_korn_capacity *regexp.Regexp
 var find_dorf1_korn *regexp.Regexp
-func (t *TravianData) gather_data_from_dorf1(content []byte){
+var find_dorf1_free_korn *regexp.Regexp
+func (t *TravianData) gather_data(content []byte) error{
+    t.is_logged_in=!bytes.Contains(content, []byte("<h2>Willkommen auf der Welt"))
+    if !t.is_logged_in{
+        return errors.New("Not logged in")
+    }
+    t.is_upgrading=bytes.Contains(content, []byte("<h5>Bauauftr"))
+
     if find_dorf1_capacity==nil{
         find_dorf1_capacity=regexp.MustCompile("<span class=\"value\" id=\"stockBarWarehouse\">([0-9]*)</span>")
     }
@@ -37,6 +49,9 @@ func (t *TravianData) gather_data_from_dorf1(content []byte){
     }
     if find_dorf1_korn==nil{
         find_dorf1_korn=regexp.MustCompile("<span id=\"l4\" class=\"value\">([0-9]*)</span>")
+    }
+    if find_dorf1_free_korn==nil{
+        find_dorf1_free_korn=regexp.MustCompile("<span id=\"stockBarFreeCrop\" class=\"value\">([0-9]*)</span>")
     }
 
     use_regex:=func(re *regexp.Regexp) (int64, error){
@@ -64,26 +79,32 @@ func (t *TravianData) gather_data_from_dorf1(content []byte){
     var err error
     t.capacity, err=use_regex(find_dorf1_capacity)
     if err!=nil{
-        panic(err.Error())
+        return err
     }
     t.wood, err=use_regex(find_dorf1_wood)
     if err!=nil{
-        panic(err.Error())
+        return err
     }
     t.clay, err=use_regex(find_dorf1_clay)
     if err!=nil{
-        panic(err.Error())
+        return err
     }
     t.iron, err=use_regex(find_dorf1_iron)
     if err!=nil{
-        panic(err.Error())
+        return err
     }
     t.korn_capacity, err=use_regex(find_dorf1_korn_capacity)
     if err!=nil{
-        panic(err.Error())
+        return err
     }
     t.korn, err=use_regex(find_dorf1_korn)
     if err!=nil{
-        panic(err.Error())
+        return err
     }
+    t.free_korn, err=use_regex(find_dorf1_free_korn)
+    if err!=nil{
+        return err
+    }
+
+    return nil
 }
