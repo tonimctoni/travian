@@ -52,7 +52,7 @@ func main() {
                 if able{
                     mylog.Println("Upgrade started for", fields[i], "(probably)...", "Sleeping for 10 minutes")
                     time.Sleep(10*time.Minute)
-                    break
+                    continue outer
                 }
             }
         }

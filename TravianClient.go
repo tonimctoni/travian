@@ -135,8 +135,8 @@ func (t *TravianClient) try_upgrade(id int) (bool, error){
         }
 
         matches:=find_costs.FindAllSubmatch(content,-1)
-        if len(matches)!=1{
-            return 0,0,0,0,0, errors.New("find_costs: len(matches)!=1")
+        if len(matches)<1{
+            return 0,0,0,0,0, errors.New("find_costs: len(matches)<1")
         }
 
         if len(matches[0])!=6{
