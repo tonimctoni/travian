@@ -1,4 +1,5 @@
 {
+    "server": "ts4",
     "name": "o1004120",
     "password": "password",
     "fields_p1": [20],

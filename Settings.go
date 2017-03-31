@@ -4,6 +4,7 @@ import "io/ioutil"
 import "encoding/json"
 
 type Settings struct{
+    Server string
     Name string
     Password string
     Fields_p1 []int

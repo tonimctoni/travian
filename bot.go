@@ -9,7 +9,7 @@ import "math/rand"
 // o1004120
 func main() {
     settings:=get_settings("settings.json")
-    tclient:=NewTravianClient()
+    tclient:=NewTravianClient(settings.Server)
     tclient.login(settings.Name, settings.Password)
 
     file, err:=os.OpenFile("log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)

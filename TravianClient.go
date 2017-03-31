@@ -15,15 +15,16 @@ import "strconv"
 
 type TravianClient struct{
     http.Client
+    server string
     tdata TravianData
 }
 
-func NewTravianClient() TravianClient {
+func NewTravianClient(server string) TravianClient {
     cookie_jar, err:=cookiejar.New(nil)
     if err!=nil{
         panic(err.Error())
     }
-    return TravianClient{http.Client{Jar: cookie_jar}, TravianData{}}
+    return TravianClient{http.Client{Jar: cookie_jar}, server, TravianData{}}
 }
 
 //Adds a "sleep" to the Get
@@ -67,7 +68,7 @@ func (t *TravianClient) PostForm_get_content_and_wait(url string, data url.Value
 var find_login *regexp.Regexp
 func (t *TravianClient) login(name, password string){
     //Get main page content
-    content:=t.Get_content_and_wait("http://ts4.travian.de")
+    content:=t.Get_content_and_wait(fmt.Sprintf("http://%s.travian.de", t.server))
 
     //Get login var from main page content
     login_var, err:=func(content []byte) (string,error) {
@@ -95,7 +96,7 @@ func (t *TravianClient) login(name, password string){
     }
 
     //Do the actual login
-    content=t.PostForm_get_content_and_wait("http://ts4.travian.de/dorf1.php", url.Values{
+    content=t.PostForm_get_content_and_wait(fmt.Sprintf("http://%s.travian.de/dorf1.php", t.server), url.Values{
             "name": {name},
             "password": {password},
             "s1": {"Einloggen"},
@@ -114,7 +115,7 @@ func (t *TravianClient) try_upgrade(id int) (bool, error){
     }
 
     //Get content of build page
-    content:=t.Get_content_and_wait(fmt.Sprintf("http://ts4.travian.de/build.php?id=%d", id))
+    content:=t.Get_content_and_wait(fmt.Sprintf("http://%s.travian.de/build.php?id=%d", t.server, id))
     //Get current resources
     err:=t.tdata.gather_resource_data(content)
     if err!=nil{
@@ -204,13 +205,13 @@ func (t *TravianClient) try_upgrade(id int) (bool, error){
     }
 
     //Start upgrade
-    t.Get_content_and_wait(fmt.Sprintf("http://ts4.travian.de/dorf%s.php?a=%s&c=%s", dorf_num, upgrade_id, upgrade_var))
+    t.Get_content_and_wait(fmt.Sprintf("http://%s.travian.de/dorf%s.php?a=%s&c=%s", t.server, dorf_num, upgrade_id, upgrade_var))
 
     return true, nil
 }
 
 func (t *TravianClient) gather_data_from_dorf1() error{
-    content:=t.Get_content_and_wait("http://ts4.travian.de/dorf1.php")
+    content:=t.Get_content_and_wait(fmt.Sprintf("http://%s.travian.de/dorf1.php", t.server))
     err:=t.tdata.gather_non_resource_dorf1_data(content)
     if err!=nil{
         return err
