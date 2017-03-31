@@ -1,8 +1,7 @@
 {
-    "url": "http://ts4.travian.de",
     "name": "o1004120",
     "password": "password",
     "fields_p1": [20],
     "fields_p2": [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18],
-    "fields_p3": []
+    "fields_p3": [21]
 }

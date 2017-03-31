@@ -10,7 +10,7 @@ import "math/rand"
 func main() {
     settings:=get_settings("settings.json")
     tclient:=NewTravianClient()
-    tclient.login(settings.Url, settings.Name, settings.Password)
+    tclient.login(settings.Name, settings.Password)
 
     file, err:=os.OpenFile("log.txt", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
     if err!=nil{
@@ -32,32 +32,31 @@ func main() {
             mylog.Println("Not logged in... Logging in in 2 minutes")
             time.Sleep(2*time.Minute)
             mylog.Println("Logging in now")
-            tclient.login(settings.Url, settings.Name, settings.Password)
+            tclient.login(settings.Name, settings.Password)
             continue
         }
 
-        if tclient.tdata.is_logged_in{
-            if !tclient.tdata.is_upgrading{
-                for _, fields:=range [][]int{settings.Fields_p1, settings.Fields_p2, settings.Fields_p3}{
-                    for _, i:=range rand.Perm(len(fields)){ //int64(1);i<=18;i++{
-                        able, err:=tclient.try_upgrade(fields[i])
-                        if err!=nil{
-                            mylog.Println("Upgrade failed for", fields[i], "... Error:", err.Error())
-                            continue outer
-                        }
-                        if able{
-                            mylog.Println("Upgrade started for", fields[i], "(probably)...", "Sleeping for 10 minutes")
-                            time.Sleep(10*time.Minute)
-                            break
-                        }
-                    }
+        if tclient.tdata.is_upgrading{
+            mylog.Println("Upgrade in progress... Sleeping for 10 minutes")
+            time.Sleep(10*time.Minute)
+            continue
+        }
+
+        for _, fields:=range [][]int{settings.Fields_p1, settings.Fields_p2, settings.Fields_p3}{
+            for _, i:=range rand.Perm(len(fields)){ //int64(1);i<=18;i++{
+                able, err:=tclient.try_upgrade(fields[i])
+                if err!=nil{
+                    mylog.Println("Upgrade failed for", fields[i], "... Error:", err.Error())
+                    continue outer
                 }
-                mylog.Println("Not enought resources available for upgrade... Sleeping for 10 minutes")
-                time.Sleep(10*time.Minute)
-            } else {
-                mylog.Println("Upgrade in progress... Sleeping for 10 minutes")
-                time.Sleep(10*time.Minute)
+                if able{
+                    mylog.Println("Upgrade started for", fields[i], "(probably)...", "Sleeping for 10 minutes")
+                    time.Sleep(10*time.Minute)
+                    break
+                }
             }
         }
+        mylog.Println("Not enought resources available for upgrade... Sleeping for 10 minutes")
+        time.Sleep(10*time.Minute)
     }
 }

@@ -65,9 +65,9 @@ func (t *TravianClient) PostForm_get_content_and_wait(url string, data url.Value
 }
 
 var find_login *regexp.Regexp
-func (t *TravianClient) login(t_url, name, password string){
+func (t *TravianClient) login(name, password string){
     //Get main page content
-    content:=t.Get_content_and_wait(t_url)
+    content:=t.Get_content_and_wait("http://ts4.travian.de")
 
     //Get login var from main page content
     login_var, err:=func(content []byte) (string,error) {
@@ -106,18 +106,22 @@ func (t *TravianClient) login(t_url, name, password string){
 }
 
 var find_costs *regexp.Regexp
-// const find_costs_string="<span class=\"resources r1.*title=\"Holz\".*alt=\"Holz\" />([0-9]*)</span><span class=\"resources r2.*title=\"Lehm\".*alt=\"Lehm\" />([0-9]*)</span><span class=\"resources r3.*title=\"Eisen\".*alt=\"Eisen\" />([0-9]*)</span><span class=\"resources r4.*title=\"Getreide\".*alt=\"Getreide\" />([0-9]*)</span><span class=\"resources r5.*title=\"freies Getreide\".*alt=\"freies Getreide\" />([0-9]*)</span>"
 var find_upgrade_vars *regexp.Regexp
 func (t *TravianClient) try_upgrade(id int) (bool, error){
-    // if id<1 || id>18{
-    //     panic("id out of range")
-    // }
+    //assert id is within good range
+    if id<1 || id>38{
+        panic("id out of range")
+    }
+
+    //Get content of build page
     content:=t.Get_content_and_wait(fmt.Sprintf("http://ts4.travian.de/build.php?id=%d", id))
+    //Get current resources
     err:=t.tdata.gather_resource_data(content)
     if err!=nil{
         return false, err
     }
 
+    //Get upgrades cost
     wood, clay, iron, korn, free_korn, err:=func() (int64, int64, int64, int64, int64, error){
         if find_costs==nil{
             re:=""+
@@ -169,10 +173,12 @@ func (t *TravianClient) try_upgrade(id int) (bool, error){
         return false, err
     }
 
+    //Check whether there are enougth resources
     if t.tdata.wood<wood || t.tdata.clay<clay || t.tdata.iron<iron || t.tdata.korn<korn || t.tdata.free_korn<free_korn{
         return false, nil
     }
 
+    //Get needed vars for get request that starts upgrade
     dorf_num, upgrade_id, upgrade_var, err:=func(content []byte) (string,string,string,error) {
         if find_upgrade_vars==nil{
             find_upgrade_vars=regexp.MustCompile("dorf([1-2]).php\\?a=([0-9]{1,10})&amp;c=([0-9a-z]*)'")
@@ -197,6 +203,7 @@ func (t *TravianClient) try_upgrade(id int) (bool, error){
         return true, err
     }
 
+    //Start upgrade
     t.Get_content_and_wait(fmt.Sprintf("http://ts4.travian.de/dorf%s.php?a=%s&c=%s", dorf_num, upgrade_id, upgrade_var))
 
     return true, nil
