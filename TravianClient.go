@@ -107,11 +107,11 @@ func (t *TravianClient) login(t_url, name, password string){
 
 var find_costs *regexp.Regexp
 // const find_costs_string="<span class=\"resources r1.*title=\"Holz\".*alt=\"Holz\" />([0-9]*)</span><span class=\"resources r2.*title=\"Lehm\".*alt=\"Lehm\" />([0-9]*)</span><span class=\"resources r3.*title=\"Eisen\".*alt=\"Eisen\" />([0-9]*)</span><span class=\"resources r4.*title=\"Getreide\".*alt=\"Getreide\" />([0-9]*)</span><span class=\"resources r5.*title=\"freies Getreide\".*alt=\"freies Getreide\" />([0-9]*)</span>"
-var find_farm_upgrade_var *regexp.Regexp
-func (t *TravianClient) try_upgrade_farm(id int) (bool, error){
-    if id<1 || id>18{
-        panic("id out of range")
-    }
+var find_upgrade_vars *regexp.Regexp
+func (t *TravianClient) try_upgrade(id int) (bool, error){
+    // if id<1 || id>18{
+    //     panic("id out of range")
+    // }
     content:=t.Get_content_and_wait(fmt.Sprintf("http://ts4.travian.de/build.php?id=%d", id))
     err:=t.tdata.gather_resource_data(content)
     if err!=nil{
@@ -138,8 +138,8 @@ func (t *TravianClient) try_upgrade_farm(id int) (bool, error){
             return 0,0,0,0,0, errors.New("find_costs: len(matches[0])!=5")
         }
 
-        if len(matches[0][1])<=0{
-            return 0,0,0,0,0, errors.New("find_costs: len(matches[0][1])<=0")
+        if len(matches[0][1])<=0 && len(matches[0][2])<=0 && len(matches[0][3])<=0 && len(matches[0][4])<=0 && len(matches[0][5])<=0{
+            return 0,0,0,0,0, errors.New("find_costs: len(matches[0][1])<=0 && len(matches[0][2])<=0 && len(matches[0][3])<=0 && len(matches[0][4])<=0 && len(matches[0][5])<=0")
         }
 
         wood, err:=strconv.ParseInt(string(matches[0][1]), 10, 64)
@@ -173,31 +173,31 @@ func (t *TravianClient) try_upgrade_farm(id int) (bool, error){
         return false, nil
     }
 
-    farm_upgrade_var, err:=func(content []byte) (string,error) {
-        if find_farm_upgrade_var==nil{
-            find_farm_upgrade_var=regexp.MustCompile("dorf1.php\\?a=[0-9]{1,10}&amp;c=([0-9a-z]*)'")
+    dorf_num, upgrade_id, upgrade_var, err:=func(content []byte) (string,string,string,error) {
+        if find_upgrade_vars==nil{
+            find_upgrade_vars=regexp.MustCompile("dorf([1-2]).php\\?a=([0-9]{1,10})&amp;c=([0-9a-z]*)'")
         }
 
-        matches:=find_farm_upgrade_var.FindAllSubmatch(content,-1)
+        matches:=find_upgrade_vars.FindAllSubmatch(content,-1)
         if len(matches)!=1{
-            return "", errors.New("find_farm_upgrade_var: len(matches)!=1")
+            return "","","", errors.New("find_upgrade_vars: len(matches)!=1")
         }
 
-        if len(matches[0])!=2{
-            return "", errors.New("find_farm_upgrade_var: len(matches[0])!=2")
+        if len(matches[0])!=4{
+            return "","","", errors.New("find_upgrade_vars: len(matches[0])!=4")
         }
 
-        if len(matches[0][1])<=0{
-            return "", errors.New("find_farm_upgrade_var: len(matches[0][1])<=0")
+        if len(matches[0][1])<=0 && len(matches[0][2])<=0 && len(matches[0][3])<=0{
+            return "","","", errors.New("find_upgrade_vars: len(matches[0][1])<=0 && len(matches[0][2])<=0 && len(matches[0][3])<=0")
         }
 
-        return string(matches[0][1]), nil
+        return string(matches[0][1]), string(matches[0][2]), string(matches[0][3]), nil
     }(content)
     if err!=nil{
         return true, err
     }
 
-    t.Get_content_and_wait(fmt.Sprintf("http://ts4.travian.de/dorf1.php?a=%d&c=%s", id, farm_upgrade_var))
+    t.Get_content_and_wait(fmt.Sprintf("http://ts4.travian.de/dorf%s.php?a=%s&c=%s", dorf_num, upgrade_id, upgrade_var))
 
     return true, nil
 }

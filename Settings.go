@@ -7,6 +7,9 @@ type Settings struct{
     Url string
     Name string
     Password string
+    Fields_p1 []int
+    Fields_p2 []int
+    Fields_p3 []int
 }
 
 func get_settings(filename string) Settings {

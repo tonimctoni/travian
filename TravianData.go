@@ -21,40 +21,40 @@ type TravianData struct{
 func (t *TravianData) gather_non_resource_dorf1_data(content []byte) error{
     t.is_logged_in=!bytes.Contains(content, []byte("<h2>Willkommen auf der Welt"))
     if !t.is_logged_in{
-        return errors.New("Not logged in")
+        return nil
     }
     t.is_upgrading=bytes.Contains(content, []byte("<h5>Bauauftr"))
     return nil
 }
 
-var find_dorf1_capacity *regexp.Regexp
-var find_dorf1_wood *regexp.Regexp
-var find_dorf1_clay *regexp.Regexp
-var find_dorf1_iron *regexp.Regexp
-var find_dorf1_korn_capacity *regexp.Regexp
-var find_dorf1_korn *regexp.Regexp
-var find_dorf1_free_korn *regexp.Regexp
+var find_dorf_capacity *regexp.Regexp
+var find_dorf_wood *regexp.Regexp
+var find_dorf_clay *regexp.Regexp
+var find_dorf_iron *regexp.Regexp
+var find_dorf_korn_capacity *regexp.Regexp
+var find_dorf_korn *regexp.Regexp
+var find_dorf_free_korn *regexp.Regexp
 func (t *TravianData) gather_resource_data(content []byte) error{
-    if find_dorf1_capacity==nil{
-        find_dorf1_capacity=regexp.MustCompile("<span class=\"value\" id=\"stockBarWarehouse\">([0-9]*)</span>")
+    if find_dorf_capacity==nil{
+        find_dorf_capacity=regexp.MustCompile("<span class=\"value\" id=\"stockBarWarehouse\">([0-9]*)</span>")
     }
-    if find_dorf1_wood==nil{
-        find_dorf1_wood=regexp.MustCompile("<span id=\"l1\" class=\"value\">([0-9]*)</span>")
+    if find_dorf_wood==nil{
+        find_dorf_wood=regexp.MustCompile("<span id=\"l1\" class=\"value\">([0-9]*)</span>")
     }
-    if find_dorf1_clay==nil{
-        find_dorf1_clay=regexp.MustCompile("<span id=\"l2\" class=\"value\">([0-9]*)</span>")
+    if find_dorf_clay==nil{
+        find_dorf_clay=regexp.MustCompile("<span id=\"l2\" class=\"value\">([0-9]*)</span>")
     }
-    if find_dorf1_iron==nil{
-        find_dorf1_iron=regexp.MustCompile("<span id=\"l3\" class=\"value\">([0-9]*)</span>")
+    if find_dorf_iron==nil{
+        find_dorf_iron=regexp.MustCompile("<span id=\"l3\" class=\"value\">([0-9]*)</span>")
     }
-    if find_dorf1_korn_capacity==nil{
-        find_dorf1_korn_capacity=regexp.MustCompile("<span class=\"value\" id=\"stockBarGranary\">([0-9]*)</span>")
+    if find_dorf_korn_capacity==nil{
+        find_dorf_korn_capacity=regexp.MustCompile("<span class=\"value\" id=\"stockBarGranary\">([0-9]*)</span>")
     }
-    if find_dorf1_korn==nil{
-        find_dorf1_korn=regexp.MustCompile("<span id=\"l4\" class=\"value\">([0-9]*)</span>")
+    if find_dorf_korn==nil{
+        find_dorf_korn=regexp.MustCompile("<span id=\"l4\" class=\"value\">([0-9]*)</span>")
     }
-    if find_dorf1_free_korn==nil{
-        find_dorf1_free_korn=regexp.MustCompile("<span id=\"stockBarFreeCrop\" class=\"value\">([0-9]*)</span>")
+    if find_dorf_free_korn==nil{
+        find_dorf_free_korn=regexp.MustCompile("<span id=\"stockBarFreeCrop\" class=\"value\">([0-9]*)</span>")
     }
 
     use_regex:=func(re *regexp.Regexp) (int64, error){
@@ -80,31 +80,31 @@ func (t *TravianData) gather_resource_data(content []byte) error{
     }
 
     var err error
-    t.capacity, err=use_regex(find_dorf1_capacity)
+    t.capacity, err=use_regex(find_dorf_capacity)
     if err!=nil{
         return err
     }
-    t.wood, err=use_regex(find_dorf1_wood)
+    t.wood, err=use_regex(find_dorf_wood)
     if err!=nil{
         return err
     }
-    t.clay, err=use_regex(find_dorf1_clay)
+    t.clay, err=use_regex(find_dorf_clay)
     if err!=nil{
         return err
     }
-    t.iron, err=use_regex(find_dorf1_iron)
+    t.iron, err=use_regex(find_dorf_iron)
     if err!=nil{
         return err
     }
-    t.korn_capacity, err=use_regex(find_dorf1_korn_capacity)
+    t.korn_capacity, err=use_regex(find_dorf_korn_capacity)
     if err!=nil{
         return err
     }
-    t.korn, err=use_regex(find_dorf1_korn)
+    t.korn, err=use_regex(find_dorf_korn)
     if err!=nil{
         return err
     }
-    t.free_korn, err=use_regex(find_dorf1_free_korn)
+    t.free_korn, err=use_regex(find_dorf_free_korn)
     if err!=nil{
         return err
     }
