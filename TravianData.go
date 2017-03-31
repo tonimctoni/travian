@@ -18,6 +18,15 @@ type TravianData struct{
     is_upgrading bool
 }
 
+func (t *TravianData) gather_non_resource_dorf1_data(content []byte) error{
+    t.is_logged_in=!bytes.Contains(content, []byte("<h2>Willkommen auf der Welt"))
+    if !t.is_logged_in{
+        return errors.New("Not logged in")
+    }
+    t.is_upgrading=bytes.Contains(content, []byte("<h5>Bauauftr"))
+    return nil
+}
+
 var find_dorf1_capacity *regexp.Regexp
 var find_dorf1_wood *regexp.Regexp
 var find_dorf1_clay *regexp.Regexp
@@ -25,13 +34,7 @@ var find_dorf1_iron *regexp.Regexp
 var find_dorf1_korn_capacity *regexp.Regexp
 var find_dorf1_korn *regexp.Regexp
 var find_dorf1_free_korn *regexp.Regexp
-func (t *TravianData) gather_data(content []byte) error{
-    t.is_logged_in=!bytes.Contains(content, []byte("<h2>Willkommen auf der Welt"))
-    if !t.is_logged_in{
-        return errors.New("Not logged in")
-    }
-    t.is_upgrading=bytes.Contains(content, []byte("<h5>Bauauftr"))
-
+func (t *TravianData) gather_resource_data(content []byte) error{
     if find_dorf1_capacity==nil{
         find_dorf1_capacity=regexp.MustCompile("<span class=\"value\" id=\"stockBarWarehouse\">([0-9]*)</span>")
     }
@@ -57,15 +60,15 @@ func (t *TravianData) gather_data(content []byte) error{
     use_regex:=func(re *regexp.Regexp) (int64, error){
         matches:=re.FindAllSubmatch(content,-1)
         if len(matches)!=1{
-            return 0, errors.New("len(matches)!=1")
+            return 0, errors.New("resource_data: len(matches)!=1")
         }
 
         if len(matches[0])!=2{
-            return 0, errors.New("len(matches[0])!=2")
+            return 0, errors.New("resource_data: len(matches[0])!=2")
         }
 
         if len(matches[0][1])<=0{
-            return 0, errors.New("len(matches[0][1])<=0")
+            return 0, errors.New("resource_data: len(matches[0][1])<=0")
         }
 
         ret, err:=strconv.ParseInt(string(matches[0][1]), 10, 64)

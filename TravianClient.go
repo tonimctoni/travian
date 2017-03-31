@@ -103,48 +103,43 @@ func (t *TravianClient) login(t_url, name, password string){
             "login": {login_var},
             "lowRes": {"0"},
             })
-
-    err=t.tdata.gather_data(content)
-    if err!=nil{
-        panic(err.Error())
-    }
 }
 
 var find_costs *regexp.Regexp
+// const find_costs_string="<span class=\"resources r1.*title=\"Holz\".*alt=\"Holz\" />([0-9]*)</span><span class=\"resources r2.*title=\"Lehm\".*alt=\"Lehm\" />([0-9]*)</span><span class=\"resources r3.*title=\"Eisen\".*alt=\"Eisen\" />([0-9]*)</span><span class=\"resources r4.*title=\"Getreide\".*alt=\"Getreide\" />([0-9]*)</span><span class=\"resources r5.*title=\"freies Getreide\".*alt=\"freies Getreide\" />([0-9]*)</span>"
 var find_farm_upgrade_var *regexp.Regexp
 func (t *TravianClient) try_upgrade_farm(id int) (bool, error){
     if id<1 || id>18{
         panic("id out of range")
     }
     content:=t.Get_content_and_wait(fmt.Sprintf("http://ts4.travian.de/build.php?id=%d", id))
-    err:=t.tdata.gather_data(content)
+    err:=t.tdata.gather_resource_data(content)
     if err!=nil{
         return false, err
     }
 
     wood, clay, iron, korn, free_korn, err:=func() (int64, int64, int64, int64, int64, error){
         if find_costs==nil{
-            re:="<div class=\"showCosts centeredText\">"+
-            "<span class=\"resources r1\" title=\"Holz\"><img class=\"r1\" src=\"img/x\\.gif\" alt=\"Holz\" />([0-9]*)</span>"+
-            "<span class=\"resources r2\" title=\"Lehm\"><img class=\"r2\" src=\"img/x\\.gif\" alt=\"Lehm\" />([0-9]*)</span>"+
-            "<span class=\"resources r3\" title=\"Eisen\"><img class=\"r3\" src=\"img/x\\.gif\" alt=\"Eisen\" />([0-9]*)</span>"+
-            "<span class=\"resources r4\" title=\"Getreide\"><img class=\"r4\" src=\"img/x\\.gif\" alt=\"Getreide\" />([0-9]*)</span>"+
-            "<span class=\"resources r5\" title=\"freies Getreide\"><img class=\"r5\" src=\"img/x\\.gif\" alt=\"freies Getreide\" />([0-9]*)</span>"+
-            "<div class=\"clear\"></div></div>"
+            re:=""+
+            "<span class=\"resources r1.*title=\"Holz\".*alt=\"Holz\" />([0-9]*)</span>"+
+            "<span class=\"resources r2.*title=\"Lehm\".*alt=\"Lehm\" />([0-9]*)</span>"+
+            "<span class=\"resources r3.*title=\"Eisen\".*alt=\"Eisen\" />([0-9]*)</span>"+
+            "<span class=\"resources r4.*title=\"Getreide\".*alt=\"Getreide\" />([0-9]*)</span>"+
+            "<span class=\"resources r5.*title=\"freies Getreide\".*alt=\"freies Getreide\" />([0-9]*)</span>"
             find_costs=regexp.MustCompile(re)
         }
 
         matches:=find_costs.FindAllSubmatch(content,-1)
         if len(matches)!=1{
-            return 0,0,0,0,0, errors.New("len(matches)!=1")
+            return 0,0,0,0,0, errors.New("find_costs: len(matches)!=1")
         }
 
         if len(matches[0])!=6{
-            return 0,0,0,0,0, errors.New("len(matches[0])!=5")
+            return 0,0,0,0,0, errors.New("find_costs: len(matches[0])!=5")
         }
 
         if len(matches[0][1])<=0{
-            return 0,0,0,0,0, errors.New("len(matches[0][1])<=0")
+            return 0,0,0,0,0, errors.New("find_costs: len(matches[0][1])<=0")
         }
 
         wood, err:=strconv.ParseInt(string(matches[0][1]), 10, 64)
@@ -185,15 +180,15 @@ func (t *TravianClient) try_upgrade_farm(id int) (bool, error){
 
         matches:=find_farm_upgrade_var.FindAllSubmatch(content,-1)
         if len(matches)!=1{
-            return "", errors.New("len(matches)!=1")
+            return "", errors.New("find_farm_upgrade_var: len(matches)!=1")
         }
 
         if len(matches[0])!=2{
-            return "", errors.New("len(matches[0])!=2")
+            return "", errors.New("find_farm_upgrade_var: len(matches[0])!=2")
         }
 
         if len(matches[0][1])<=0{
-            return "", errors.New("len(matches[0][1])<=0")
+            return "", errors.New("find_farm_upgrade_var: len(matches[0][1])<=0")
         }
 
         return string(matches[0][1]), nil
@@ -202,16 +197,16 @@ func (t *TravianClient) try_upgrade_farm(id int) (bool, error){
         return true, err
     }
 
-    content=t.Get_content_and_wait(fmt.Sprintf("http://ts4.travian.de/dorf1.php?a=%d&c=%s", id, farm_upgrade_var))
-    err=t.tdata.gather_data(content)
-    if err!=nil{
-        return true, err
-    }
+    t.Get_content_and_wait(fmt.Sprintf("http://ts4.travian.de/dorf1.php?a=%d&c=%s", id, farm_upgrade_var))
 
     return true, nil
 }
 
 func (t *TravianClient) gather_data_from_dorf1() error{
     content:=t.Get_content_and_wait("http://ts4.travian.de/dorf1.php")
-    return t.tdata.gather_data(content)
+    err:=t.tdata.gather_non_resource_dorf1_data(content)
+    if err!=nil{
+        return err
+    }
+    return t.tdata.gather_resource_data(content)
 }
